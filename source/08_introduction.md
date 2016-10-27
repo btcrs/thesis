@@ -1,24 +1,24 @@
 # Introduction {.unnumbered}
 
-10 years from now computers will feed the world. For decades agricultural scientists
-have worked tirelessly to improve and perfect the process of large-scale food production.
+Agricultural scientists have worked tirelessly to improve and perfect the process of large-scale food production.
 Advances in farming technology have without a doubt led to strong boosts in crop yield
-at lower costs. Furthermore, without this development the amount of land and water
+at lower costs, and we are lucky that they have because without the development of
+advanced, modern practices the amount of land and water
 necessary to feed the global population would be absurd. Today 40% of land and 85%
 of water consumption is used solely to grow food. Being that we can produce the same
 amount of yield that we did 50 years ago with approximately 1/3 of the land, without
 agricultural advances we'd need 26 billion acres of land, nearly 80% of all land on
-earth, to produce enough food.
+earth to produce enough food.
 
 The increased production of food, however, is not as far reaching as one would like.
 In fact, it is likely that those who need increased production of food most are those
-that are affected least by recent technological advances in food. The International
+that are affected least by recent technological advances. The International
 Assessment of Agricultural Science and Technology for Development (IAASTD) has responded
-that despite significant scientific and technological achievements in our ability
+that "despite significant scientific and technological achievements in our ability
 to increase agricultural productivity, we have been less attentive to some of
-the unintended social and environmental consequences of our achievements.
+the unintended social and environmental consequences of our achievements".
 
-So, with the looming global food crisis, environmental impact of rising global temperatures,
+With the looming global food crisis, environmental impact of rising global temperatures,
 and ever growing global population; how can we improve on the process of growing food?
 One Japanese company, Mirai, working with GE has spearheaded an experiment proposing indoor
 hydroponic gardens. After purchasing a retired 25,000 square foot Sony semi-conductor factory
@@ -26,8 +26,9 @@ plant physiologist Shigeharu Shimamura began converting it into the world's larg
 farm illuminated by LED. The constantly lit, environmentally controlled grow room immediately
 showed some of the benefits of the practice. Produce waste was from nearly 50 percent to just 10,
 productivity per square foot was nearly 100 times as much, and water usage was just 1 percent of
-what a conventional farm would consume. Thus it has been proposed that hydroponics could be
- the future of agriculture.
+what a conventional farm would consume. The success of their flagship factory has led to increased
+interest in creating factories all over the world suggesting that hydroponics could be
+the future of agriculture.
 
 Hydroponics is a method of growing crops using only a nutrient solution administered
 directly to the roots of the plants being grown and an inert medium used to suspend the
