@@ -21,7 +21,7 @@ These requirements ensured that I created a useful, secure product that was
 abstracted from the number of gardens being monitored and the hardware configurations
 of each.
 
-##Summary of chapters
+##Summary of Chapters  {.unnumbered}
 
 In chapters 1 and 2 I will outline how I designed the application. In chapter 1, **Processes**,
 I will outline tools, technologies, and components of particular interest. A great deal
