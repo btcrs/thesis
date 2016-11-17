@@ -1,5 +1,8 @@
 # Introduction {.unnumbered}
 
+
+
+# Context {.unnumbered}
 Agricultural scientists have worked tirelessly to improve and perfect the process of large-scale food production.
 Advances in farming technology have without a doubt led to strong boosts in crop yield
 at lower costs, and we are lucky that they have because without the development of
@@ -88,20 +91,6 @@ In an effort to explore methods of making hydroponic gardens, a high-yield, sust
 space saving means of growing fresh produce, more available I built Victor -- a collection of
 services used in conjunction to mitigate the amount of time taking measurements about the growing conditions
 of your garden, provide you with real time alerts in the case that something seems to be going
-wrong, and give you an interface with managing some of the upkeep remotely. The test garden being monitored
-is a NFT hydroponic garden consisting of four channels each of which are four feet in length.
-The channels are mounted on a tabletop in a staggered configuration in which the to middle channels
-are a few inches above the outer ones to regulate temperature and sun exposure. A 30 gallon reservoir
-is affixed on shelf underneath the channels in which a small pond pump feeds water to the higher
-end of the channels. On top of the reservoir sits a small water-tight enclosure that houses a
-Raspberry Pi 3 -- a credit card sized microcomputer. This device controls a handful of sensors
-constantly measuring health indicators and pushing the data to cloud hosted database. This device
-can be managed either by accessing the device directly or through a remote provisioning tool.
-To display the data collected by the garden's computer, or any collection of garden's computers, another
-cloud hosted site provides a dashboard with real time graphics and analytics that are generated from the
-most recent data stored in the database.
-
-Thus, after the initial setup by accessing the dashboard site we can gather a a quick and
-comprehensive view of the current state of the garden. I believe this tool can easily cut back both
+wrong, and give you an interface with managing some of the upkeep remotely.  I believe this tool can easily cut back both
 the total number of hours required to maintain a hydroponic garden and lower the barrier of entry
 by providing gardeners with baseline numbers to compare to and programmable warnings.
