@@ -2,8 +2,7 @@
 
 ## Introduction
 
-In this chapter I will first outline the flow of information through Victor's
-services in it's most general use case.  Then, working from the bottom up, I'll detail the implementation process including how working parts of the services are tied together and how each of the three services, the garden, the api, and the dashboard, interact.
+In this chapter I will first outline the flow of information through Victor's services in it's most general use case. Then, working from the bottom up, I'll detail the implementation process including how working parts of the services are tied together and how each of the three services, the garden, the api, and the dashboard, interact.
 
 ## Flow Control
 
