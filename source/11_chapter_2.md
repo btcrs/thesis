@@ -6,6 +6,8 @@ In this chapter I will first outline the flow of information through Victor's se
 
 ## Flow Control
 
+![Flow \label{flow}](source/figures/flow.png){ width=100% }
+
 Victor uses a role based access control system in which only two types of users are considered to exist. The vast majority of users that might access the application are uncredentialed, outside users. This group makes up person who wishes to view the data, but has not been given access to make any changes. These users will almost always be accessing the site remotely, meaning requests to the dashboard will not come from the same network that the garden is connected to. The other group is much smaller and is made up of garden maintainers who want to and have the access to make changes to the garden remotely. These credentialed admin users have access to all of the same functions as the outside users; however, once their access has been properly vetted, they gain the additional power of manipulating data via PUT and DELETE requests to the API and issuing commands to be evaluated by the garden machines.
 
 As a outside user, the benefits made available by Victor are in consuming data about the garden's environment. Outside user's can use this a point of reference or comparison for their own gardens, so they want an easy way to consume recent relevant data. To do this the user must access the URL of the dashboard. Though no means of collaboration is included in the framework, access to the dashboard is made available through the projects Github repository. Upon accessing the main page, the dashboard service immediately realizes that the user's request is unauthorized, so a call to the API is necessary to identify roles. The The API seeing a request coming from the user, knows that read requests from an uncredentialed user are allowed, so it gathers the most recent set of data from the garden and sends it back as a JSON object to the dashboard. Once the dashboard gets the data it cleans it and constructs the appropriate graphs and widgets. Knowing that more relevant data is saved and stored with the API service every few minutes, the dashboard makes sure the check back in periodically to maintain relevance.
@@ -164,3 +166,146 @@ services:
 Each of service defined under the services tag defines a separate docker container. In this case the requirements are all very similar. The `temperature` tag defines the name to be given to the container. `build` delineates where to find the dockerfile associated with this container. `privileged` defines that the contianer may need sudo access to run appropriately. `volumes` explicitly states any of the volumes, which may be defined in the dockerfile. One of the most important declarations is `devices` which specifies a runtime parameter allowing the container to directly interface with the hardware.
 
 The incredibly powerful implication of this tool is that a single command `docker-compose up` from within the proper directory builds every defined container and starts collecting data rapidly in a secure, manageable way. Furthermore, the containers are ephemeral, so changes can be deployed with ease and downtime can be strongly mitigated because of the speed and ease of start up. Lastly, though each sensor requires a few important pieces, this architecture keeps the deployment of a system nearly identical regardless of the complexity and size of the configuration, which is a massive gain for extensibility.
+
+### Gardeners-Log
+
+At this point each of the sensors is capable of measuring and reporting data, but we haven't defined a location where the data should be sent. `Gardeners-Log` is the service that handles the manipulation of data, authentication, and communication between the dashboard and `container-gardening` level processes. At its core `Gardeners-Log` is a simple RESTful API; however, the architecture on which it's built and the security implementations associated allow for a scalable, protected channel of information transfer.
+
+Victor uses a serverless architecture for it's API because it hands off the responsibility of managing, scaling, and provisioning servers to the serverless provider. We're already maintaining a semi-complex deployment of IOT devices, so minimizing the complexity and cost of the other services helped keep everything as manageable as possible. Victor's API is currently hosted on AWS Lambda, Amazon's serverless platform. Architecturally, the API is made up of a composition of a few of Amazon's cloud services interacting with Lambda's compute platform. The entry point for any application wishing to interact with garden data is an Amazon API Gateway. This gateway is an HTTP listener configured to initiate a certain function correlated to the path used to access it. The gateway also provides an interface for using custom authorizer functions and API key authorization. Behind the API gateway sits some number of Lambda functions. Functions are stand alone module exports exposing a single method. Though lambda supports a few languages, I chose to write my functions in Node. The functions used for Victor's API define CRUD operations for the Garden's database. These functions interact with the last Amazon cloud service involved in this architecture, DynamoDb. The data is light and relatively consistent in shape, so most storage implementations would be suitable, but DynamoDb was an easy choice because it is managed, pretty simple, and exists within the Amazon ecosystem. Though the API gateway is constantly listening for new requests, the Lambda functions spin up on demand and are metered by ticks of 100ms. Unlike a standard always on servers the runtime costs should be very minor for a REST API.
+
+As mentioned in the section detailing Flow Control there are two primary users, credentialed and uncredentialed. However, another communicating party is the `Gardener` container hosted on one of the Garden's computers. Unlike, the aforementioned user types, the `Gardener` isn't able to navigate through a multi-step authentication process. The data being sent to the API is the most valuable resource provided by Victor, so naturally I wanted to put some measures in place to preserve data integrity. The API Gateway service has a concept of protected paths with which I implemented relatively simple, secret based authentication. Through AWS management I created an API key for each of the garden's microcomputers. In the configuration of the POST function I designated the function as protected and allowed any of the three keys to authenticate. In the docker-compose configuration I define the respective keys as environmental variables which are accessed by the sensors code. In doing so, I have a log of which machine accessed the POST method of the API gateway and the data that it submitted.
+
+Credentialed users, however, may need to update or delete data. I wasn't comfortable with secret based authentication for admin level operations, so I exposed another set of Lambda functions on the separate API gateway to be used as authorizer function. When a user requests to authorize to the API they're redirected based on a chosen provider to either Facebook's or Google's authentication page. The provider asks the user if they authorize Victor read access of their account. If the user allows authorization of Victor then the provider sends an authorization code to the API. With this code the API sends an authorization request back to the provider and in turn receives an access token.
+
+This flow represents standard Oauth authentication. The authorizer function of both the PUT and DELETE entry points of the API's gateway is set to the authorization function of the of my second Lambda based authentication service. This means that for any PUT or DELETE request sent to the API must also pass the authorization function.
+
+After a user authenticates they receive an access token that is in turn sent with every subsequent request. This token is passed to the authorizer. The authorized constructs and sends a request to the correct provider with the access key. If the access token is valid, the API will process the request according to its API specifications. If the access token is expired or otherwise invalid, the API will return an "invalid_request" error. If the Authorizer passes successfully then the originally requested operation is performed otherwise an error message is returned.
+
+The resulting API is simple, but exposes all necessary operations in a very deliberate manner. Creation of data entries is handled by POST requests to `/dev/datum` and authorized via the API keys. Manipulation of data is handled by PUT and DELETE requests to `/dev/datum/{id}` and authorized via the separate serverless Oauth service. Obtaining a list of every entry is handled by a get request to `/dev/datum/` and getting a single entry by a GET request to `/dev/datum/{id}`. Neither of the read requests are credentialed so that unauthorized users are still able to view the garden's data. In the following subsection I'll outline the construction of one of the serverless function.
+
+#### Serverless
+
+All of AWS Lambda development was done using a framework aptly named `Serverless`. Each collection of functions is called a service. Every service is contained within its own directory and defined by a file name `serverless.yml`.
+
+The first portion of this file details AWS configuration metadata.
+
+```
+service: victors-api
+
+frameworkVersion: ">=1.1.0 <2.0.0"
+
+provider:
+  name: aws
+  runtime: nodejs4.3
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+  apiKeys:
+   - DataLogger
+```
+
+This snippet defines the language the functions are written in, environmental variables and api keys, and identity management configuration for the defined resources.
+
+The next section provides a declaration for each function contained in the service.
+
+```
+functions:
+  create:
+    handler: datum/create.create
+    events:
+      - http:
+          path: datum
+          method: post
+          private: true
+          cors: true
+          integration: lambda
+```
+
+Here I define the create function, whcih is located at the path `datum/create`. The `events` tag defines the API gateway path that will trigger this function. `integration`, `path`, and `method` declare that it will be triggered by a POST to an API gateway at the path datum. `private` indicates the request will require a key defined in the previous snippet called `DataLogger`. `cors` allows the request to be called by another resource rather than directly by a user.
+
+Finally, a DynamoDB instance is defined in the resources section declaring the database and table that the functions will interact with:
+
+```
+resources:
+  Resources:
+    DataDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+```
+
+The function itself is a small, but not by necessity, Node file.
+
+```
+const uuid = require('uuid');
+const AWS = require('aws-sdk');
+
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
+
+module.exports.create = (event, context, callback) => {
+  const timestamp = new Date().getTime();
+  const data = JSON.parse(event.body);
+  if (typeof data.value !== 'string' || typeof data.parameter !== 'string') {
+    console.error('Validation Failed');
+    callback(new Error('Couldn\'t create the data value.'));
+    return;
+  }
+
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    Item: {
+      id: uuid.v1(),
+      parameter: data.parameter,
+      value: data.value,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+  };
+
+  dynamoDb.put(params, (error, result) => {
+    if (error) {
+      console.error(error);
+      callback(new Error('Couldn\'t create the data entry.'));
+      return;
+    }
+
+    const response = {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin" : "*" // Required for CORS support to work
+      },
+      body: JSON.stringify(result.Item),
+    };
+    callback(null, response);
+  });
+};
+```
+
+The file defines a single function that takes the parameters event, context, and callback. These define event data, runtime information of the Lambda function, and a function used to return information to the caller.
+
+This particular function takes the data posted in the event's request body and the current time and then constructs an object to be stored in the dynamoDB database defined in the resources section. The function passes a 200 response back to the caller as long as the database call did not error out.
+
+Once every other function is defined `serverless deploy` translates `serverless.yml` to a single AWS CloudFormation template, zips the functions, and publishes a new version for each function in the service.
+
+In line with the emphasis on extensibility this architecture allows for a modular, secure, and highly modifiable API that implements and exposes every necessary action safely.
