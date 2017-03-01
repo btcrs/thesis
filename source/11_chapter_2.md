@@ -22,13 +22,9 @@ These two roles and the parties that are allowed to communicate maintain a very 
 
 Container-Gardening is the name I've given to the repository for all of the resources and processes to be run on the microcomputer that lives physically connected to the garden.
 
-In the case of my specific test build I've chosen to use three separate boards, each of which are produced and sold by RaspberryPi. The three microcomputers are the RaspberryPi 3, RaspberryPi Zero, and RaspberryPi 2 rev b. Each board has drastically different cost, IO limitations, and power requirements. For instance, the RaspberryPi Zero, a $5 microcomputer, has a power rating of 160ma and a 1Ghz single core processor, whereas the RaspberryPi model 3 costs $37.95 for a 1.2Ghz quad-core processor and an 800ma power rating.
+In the case of my specific test build I've chosen to use three separate boards, each of which are produced and sold by RaspberryPi. The three microcomputers are the RaspberryPi 3, RaspberryPi Zero, and RaspberryPi 2 rev b. ![Model B \label{model_b}](source/figures/modelb.jpg) ![Zero \label{zero}](source/figures/zero.jpg) ![3 \label{3}](source/figures/pi3.jpg)
 
-![Model B \label{model_b}](source/figures/modelb.jpg){ width=50% }
-
-![Zero \label{zero}](source/figures/zero.jpg){ width=50% }
-
-![3 \label{3}](source/figures/pi3.jpg){ width=50% }
+Each board has drastically different cost, IO limitations, and power requirements. For instance, the RaspberryPi Zero, a $5 microcomputer, has a power rating of 160ma and a 1Ghz single core processor, whereas the RaspberryPi model 3 costs $37.95 for a 1.2Ghz quad-core processor and an 800ma power rating.
 
 Though the total power usage of the build and the computational power required to host the required sensors will ultimately impact the choice in platform -- there are a small set of requirements. First the garden's computer needs to run some variant of linux in order to leverage the Docker ecosystem. I've chosen Ubuntu ARM, but any modern Linux OS would reliably and comfortably facilitate using Docker. The chosen board also needs a GPIO interface. A strong majority of sensors sold today interface over GPIO. I2C and SPI communication protocols are relatively efficient, so the total number of external components per board can be much greater than alternatives using input like USB. Lastly, the board needs some means of networking. At least one board needs access to the internet, but all need some way to communicate whether over the wire, HTTP, or some other short range mesh networking.
 
@@ -309,3 +305,21 @@ This particular function takes the data posted in the event's request body and t
 Once every other function is defined `serverless deploy` translates `serverless.yml` to a single AWS CloudFormation template, zips the functions, and publishes a new version for each function in the service.
 
 In line with the emphasis on extensibility this architecture allows for a modular, secure, and highly modifiable API that implements and exposes every necessary action safely.
+
+### Victor
+
+With `container-gardening` consistently gathering sensor data and `gardeners-log` providing a means of both storage and access, a single service stands in the way Victor being a transparent and pleasant user experience. Simply named `victor`, the framework's front end is the view of the application in totality to most users. Though `victor` the web application, is the simplest component of victor, the framework, the front end is responsible for masking the fact that there exists any separation of duties among services while also offering a beautiful and useful interface.
+
+I chose to build this application using Angular, and I've hosted it using GitHub pages. All of the data garden's data is accessible via a single HTTP call, so the application is composed of entirely static resources. This proved incredibly useful because Github pages, though limited to only static pages, is hosted completely for free. Furthermore, any changes made to the page, on the `gh-pages` branch of the repository, are immediately deployed to the site.
+
+`victor` is a web application with two primary views. As a user makes a request for any of the site's page, the base authentication service examines the request's cookies looking for an access token. If no token is found, the page request is immediately redirected to the login page. The login view is relatively bare. The user can choose to login via either Facebook or Google or if they aren't interested in authenticating they have the option of accessing a read only view of the garden.
+
+If the request does contain an access token, the user successfully authenticates, or they choose to view the read-only data then they're routed to the garden dashboard view. This view's controller immediately makes a request to the API to gather the most recent data. The data is received as a large JSON array, which makes manipulation and sorting quick and easy.
+
+From the received array, the controller constructs an objects matching each parameter's name to an array of objects representing that parameter's measurements. Each element of the array takes the form `{'value': XX, 'dateCreated': mm/dd/yyyy}`. The view uses an Angular directive `ng-repeat` to iterate through the object of parameters and constructs a time series graph for each.
+
+Though collecting and sorting all of the data adds some complexity to the client-side service, doing so allows for any configuration of sensors. Designation of data is handled via the parameter, and the datas representation is parameter agnostic. Parameter specific view configuration can be handled and defined within the controller's view if necessary.
+
+For credentialed users a small icon button is added to the parameters with configuration or manual controls. Clicking the button opens a window with the appropriate inputs and a form mapped to the API endpoint. Submitting the form sends a simple HTTP request in the same exact format as submitting or manipulating data. User's controls are never multi-step, so submission fully hands off responsibility to the API. Furthermore, any command that invalidates the controller's current data initializes a subsequent request for a data update. Neither call requires the page to reload, but because of Angular's two way data-binding any change in data is immediately reflected in the view resulting in a near real-time display. If no change occurs on the page, the data is refreshed based on the time since the last API call.
+
+As previously mentioned, this service is very simple, which is largely due to the architecture of the other components. I chose to develop a web application for the widest availability, but there's very little preventing the front end being replaced or duplicated. The data is fully abstracted from the application, so a mobile application, native client, or something more novel like a skill for Amazon's Alexa.
