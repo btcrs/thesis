@@ -75,3 +75,9 @@ These two services can be substituted entirely assuming they provide the same fu
 Victor as a framework provides an ideal platform for facilitating a secure and configurable IoT while limiting the amount of code necessary to make changes. Though a large amount of variability is expected and allowed within the garden's network, the other services limit active management by passing it off to third party providers. The framework is capable of adapting to a great deal of change, and should thrive by acting reliably regardless of the developer's modifications.
 
 ## Closing Thoughts
+
+The IoT ecosystem is likely to mature drastically in the next few years. The desire for a fully standardized market is unlikely, but as the market share consolidates it appears it may converge on a common means of communication and discovery. Victor was developed to adapt and conform to standardization as a model of how an ecosystem can be situated to provide necessary features without stagnating the growth of deployment.
+
+The organization and tooling that Victor is able to offer through secure, quick, and emerging technologies like Docker allows for constant development and deployment. Provisioning new devices is seamless, and the architecture of the application is cost-efficient and capable of scaling to as many or few devices as necessary.
+
+The design provides a lot of value for networked, data acquisition focused deployments of IoT hardware.
