@@ -1,6 +1,6 @@
 # Requirements {.unnumbered}
 
-As the primary user of this service I approached development with a strict set of requirements.
+As the primary user of this service, I approached development with a strict set of requirements.
 
 First, there must be an attractive web-facing dashboard that is accessible by any and every user that knows where to find it. The dashboard should be extensible so that the numbers of gardens being displayed or connected is entirely up to the user.
 

@@ -14,15 +14,19 @@ After the initial setup, by accessing the dashboard site we can gather a quick a
 
 The build includes three separate sensors that gather measures of temperature -- a sensor each for ambient, reservoir, and channel temperature. The ambient and reservoir temperatures are measured via a waterproofed DS18B20 sensor. The DS18B0 is reasonably accurate and IO efficient.
 
-Using the 1-Wire protocol it's possible to gather separate measurements from multiple, identifiable devices using only a single pin of input. (See Figure Y.) This is incredibly beneficial because each of the garden computers can incorporate more devices without the need for a hardware extension that includes additional general-purpose input/output pins. Furthermore, each sensor can be identified programmatically, because each sensor has a unique serial number, which means that a single  process can interface with all of the sensors.
+Using the 1-Wire protocol it's possible to gather separate measurements from multiple, identifiable devices using only a single pin of input.
+
+![The yellow jumper cable in this image is the only wire attached to any input pin. Each other wire deals with supplying power.\label{one_wire_image}](source/figures/one_wire_image.jpg)
+
+This is incredibly beneficial because each of the garden computers can incorporate more devices without the need for a hardware extension that includes additional general-purpose input/output pins. Furthermore, each sensor can be identified programmatically, because each sensor has a unique serial number, which means that a single process can interface with all of the sensors.
 
 One additional sensor is used to measure the temperature inside one of the top-side growing channels. Instead of the DS18B20 the internal channel temperature is measured using an AM2315\. This sensor includes a waterproof housing that includes an identical DS18B20 temperature sensor, a capacitive humidity sensor, and a small microcontroller to provide a simple I2C communication interface. Though interfacing via I2C adds some complexity, having a measure of humidity inside the channels provides insight into the roots' growing conditions as well as propensity for harmful algae blooms.
 
-It is assumed that monitoring of a single channel is sufficient because the channels exist in close proximity; however without monetary constraints additional sensors could be added very easily. Adding additional DS18B20's to each of the remaining channels for instance would only require mapping each of the serial numbers to their respective locations.
+It is assumed that monitoring of a single channel is sufficient because the channels exist in close proximity; however, barring monetary constraints additional sensors could be added very easily. Adding additional DS18B20's to each of the remaining channels for instance would only require mapping each of their serial ids to their respective locations.
 
 #### Ph
 
-Coupled with temperature, pH is a very descriptive health indicator for a hydroponic garden. I've chosen to use Atlas Scientific's EZO pH circuit and silver electrode pH probe. After the initial calibration this sensor is expected to provide accurate measurements of pH between 0 and 14 for two years. This circuit is capable of communicating asynchronously via serial with the universal asynchronous receiver/transmitter (UART) on the Raspberry Pi. Because communication is handled via serial, the sensor occupies the RX and TX pins on the RaspberryPi.
+Coupled with temperature, pH is a very descriptive health indicator for a hydroponic garden. I've chosen to use Atlas Scientific's EZO pH circuit and silver electrode pH probe. After the initial calibration this sensor is expected to provide accurate measurements of pH between 0 and 14 for two years. This circuit is capable of communicating asynchronously via serial with the universal asynchronous receiver/transmitter (UART) on the Raspberry Pi. Because communication is handled via serial, the sensor occupies the RX and TX pins on the RaspberryPi 2 rev b.
 
 #### Flow
 
@@ -48,35 +52,88 @@ A small, cheap visible light sensor was added to determine the amount light reac
 
 ### Angular
 
-Angular is a javascript framework developed and maintained by Google that is built on the idea that by extending HTML, web application developers can construct modular, declarative components that fit together to build dynamic web pages. Database operations are largely abstracted and the results of any AJAX calls can be bound to, and thus automatically update, any of the previously constructed, reusable DOM elements. 
+Angular is a Javascript framework developed and maintained by Google that is built around the idea that by extending HTML, web application developers can construct modular, declarative components that fit together to build dynamic web pages. Database operations are largely abstracted and the results of any AJAX calls can be bound to, and thus automatically update, the previously constructed, reusable DOM elements. Angular adds the ability to extend HTML and create Directives, which are encapsulations of HTML and client-side Javascript that allow developers to create and reuse custom elements. This leads to declarative markup, and means that reading the HTML alone is usually enough to get a quick idea of an application's purpose. Furthermore, by defining options that can be passed into directives, it's possible to create multiple similar components without an egregious reuse of code.
 
-[This is a very dense paragraph that calls for illustratuve examples or a figure. What's an example of a reusable DOM element you use that has AJAX call results bound to it, that abstracts away CRUD, and how is it implemented in a declarative way that is modular?]
+The web application, aptly called Victor, has two primary functions -- gathering data and displaying data. All of the information is time series data, so displaying the garden's data via graphs is a very repeatable process. This is one way in which I leveraged Angular to create an extensible dashboard to consume garden data.
+
+Loading the dashboard initiates a request to the API that grabs a list of the most recent database entries.
+
+```
+$http.get('https://aadrsu3hne.execute-api.us-east-1.amazonaws.com/dev/datum').then(function(data) {
+```
+
+This function retrieves an array of entries asynchronously, so the the following `.then()` calls a function to manipulate the data once it is received.
+
+The resulting array is a bag of unsorted measurements from each of the sensors, so I do a bit of manipulation before assigning it to a variable that is visible to the HTML Directives.
+
+```
+[{"parameter":"light","createdAt":1491252532082,"value":"352.000",
+"id":"f1f4d520-18ae-11e7-b313-5d5b225fc2b6","updatedAt":1491252532082},
+{"parameter":"pressure","createdAt":1491252725837,"value":"1013.061",
+"id":"65717fd0-18af-11e7-b313-5d5b225fc2b6","updatedAt":1491252725837},
+{"parameter":"temperature","createdAt":1491254237495,"value":"29.723",
+"id":"ea763470-18b2-11e7-b313-5d5b225fc2b6","updatedAt":1491254237495},
+{"parameter":"pressure","createdAt":1491253037765,"value":"1013.145",
+"id":"1f5def50-18b0-11e7-b313-5d5b225fc2b6","updatedAt":1491253037765},
+{"parameter":"pressure","createdAt":1491253204313,"value":"101477.794",
+"id":"82a32490-18b0-11e7-b313-5d5b225fc2b6","updatedAt":1491253204313},
+{"parameter":"temperature","createdAt":1491253022715,"value":"30.408",
+"id":"16657cb0-18b0-11e7-b313-5d5b225fc2b6","updatedAt":1491253022715},
+{"parameter":"depth","createdAt":1491253267173,"value":"2.8",
+"id":"a81ad150-18b0-11e7-b313-5d5b225fc2b6","updatedAt":1491253267173},
+{"parameter":"Luminosity","createdAt":1491253948475,"value":"2",
+"id":"3e3140b0-18b2-11e7-b313-5d5b225fc2b6","updatedAt":1491253948475},
+{"parameter":"depth","createdAt":1491252841556,"value":"2.6",
+"id":"aa6ad140-18af-11e7-b313-5d5b225fc2b6","updatedAt":1491252841556},
+```
+
+Each of these entries is transformed into key value pairs of the form `{"value": XXX, "date": XXX}` and collected into separate arrays for each measurement. Now this collection of parameters and their massaged values are assigned to a $Scope variable, another Angular construct that makes the data visible and modifiable via the HTML, so that I'm able to cycle through and create a data dashboard programmatically.
+
+```
+<div class="dash-page">
+ <div class="dash col-md-12" ng-controller="DashboardController as ctrl">
+  <div class="row" ng-repeat='row in ctrl.charts | groupBy:2'>
+    <div ng-repeat="item in row" class="col-md-6">
+      <chart data="item.data"
+        options="item"
+        ng-if="item.data"
+        convert-date-field="{{date}}">
+      </chart>
+    </div>
+  </div>
+ </div>
+</div>
+```
+
+This small snippet of code is able to create a full dashboard of approximately eight time series graphs featuring real-time, updatable data.
+
+`ng-repeat='row in ctrl.charts | groupBy:2` cycles through every element in the previously created object of measurement arrays by groups of two. Then, while looping through each group of two, I'm able to create a row of two charts by using the `<chart>` directive to render `metrics-graphics` time series charts. Under the hood, the `<chart>` directive is constructing an object consisting of the necessary Javascript and HTML to create and render a chart with the given parameters, but this is abstracted to make the HTML page's components encapsulated and expressive. Modification of the data exposed by `item.data` through the web page is reflected in the Javascript and updates to the data in the Javascript are made visible immediately by the HTML, which is called two-way databinding.
+
+![\label{Victor}](source/figures/victorweb.png)
+
+Though this is a small example of the benefit provided by using Angular as the underlying structure of the application, it demonstrates two of the key mechanisms that made Angular an appealing option.
 
 The web framework space is heavily flooded and also incredibly opinionated. My main criteria were that I wanted a structure that was both pluggable and maintainable, meaning I wanted every file to encapsulate only one module of logic, I needed the act of updating previously stored data to be transparent and fast, and I wanted a framework that was well maintained.
 
 During my research I was immediately confident that Angular would provide a stable base considering the fact that it's backed by Google and has over 50,000 stars on GitHub; however, Angular's directives and two-way data binding are what drove me to ultimately believe Angular would work well within the structure I had devised for Victor.
 
-[OK, I'll bite. What's a directive, and what's two-way binding, and where do you use it?]
-
-As I mentioner earlier, Angular puts a lot of emphasis on the ability to extend HTML to create Directives, which are encapsulations of HTML and client-side javascript that allow developers to create and reuse custom elements. This leads to declarative markup, and means that simply by reading the HTML tags you can get a quick idea of what components do. Furthermore, by defining options that can be passed into directives, it's possible to create multiple similar components without an egregious reuse of code.
-
-[OK, now it get it better. This should go in the first paragraph.]
-
 ### REST
 
-Victor is a hierarchically organized project composed of a few small services. 
+Victor is a built using the basic principles of service oriented architecture, which is a style of software design where self-contained modules of functionality are composed and interconnected. The framework consists of a composition of three services, namely Victor, Gardners-log, and Container-gardening, each of which have a single function.
 
-This isn't clear: (is it your initial design?)
+In the previous section I showed how through a top-level, front-end service, Angular helps load and display all of the data collected from the garden. However, in order to view and manipulate data, the front-end service needs to gather information in a parseable format. Historically, the dashboard and garden would have been heavily coupled. As hardware components collected measurements they would write them to a relational or flat file database, which the dashboard would then use to gather and display information. Also, any commands to be executed by user input would likely entail direct access of the data collection process.
 
-We started at a top-level, front-end service, which, to a user, provides all of the project's functionality. However, in order to view and manipulate data, the dashboard service needs to gather information in a parseable format. Historically, the dashboard and garden might be heavily coupled. As hardware components collected measurements they would write them to a relational or flat file database, which the dashboard would then use to gather and display information. Also, any commands to be executed by user input would likely entail direct access of the data collection process.
+This monolithic architectural style presented a few problems. In order to access the data you need to be able to access the machine running the program, know the format of data storage, and have a direct connection to the data. Furthermore, when any portion breaks or is scheduled to be updated or modified then then entire application goes down. Lastly, gaining access through the use of any vulnerability present in the application opens the door to any and all other services involved, which means that if you find a client-side vulnerability in the user-facing dashboard then you likely have full access to the data collection process.
 
-This presents [presented?] a few problems. In order to access the data you have to be accessing the machine running the program, know the format of data storage, and have a direct connection to the data that utilizes a retrieval method suitable for that format. Furthermore, if anything breaks or is scheduled to be updated or modified then everything goes down. Lastly, gaining access through the use of any vulnerability present in the application opens the door to any and all other services involved, which means that if you find a client-side vulnerability in the user-facing dashboard then you likely have full access to the data collection process.
+Each of these issues is serious, but by implementing a service based application I was able to mitigate some of these operational issues.
 
-This isn't a good thing. [Which "this"?]  Instead we can follow micro-service methodology [What's that? Reference?] and implement a back-end api. In terms of technology, this is simply a database hosted in the cloud with a small bit of marshalling code that can read and write standard HTTP requests. Based on what is received the code either queries or submits data to the database and returns a textual representation of what it did.
+The central, facilitating service of Victor's composition is the service called `Gardners-log`. This service consists of a cloud hosted database, a list of functions that read and update that database, and listener service that sits waiting for users requests to initiate one of those functions. `Gardeners-log` provides a RESTful API that the other services can interact with to create and consume data. An API, or Application Programming Interface, is a list of functions and a designation of how they can be executed and with what parameters. What makes an API RESTful is that a RESTful API provides interoperability between web based services by allowing requesting services to access and manipulate textual representations of data using a uniform and predefined set of stateless HTTP based operations.
 
-This unattached service, however, is incredibly valuable in that it makes our applications much more robust, secure, and accessible. For instance, the data coming from my garden is valuable and should be made available to any number of clients to read. In the future I may want to create different an application that reads data from gardens that exist all over the country and compare their yield based on weather and other health indicators. It could also be the case that I want to create a native application that can send updates straight to my desktop. By creating an API using standard RESTful practices the clients that intend to read in my data don't need any previous knowledge aside from the URL of where it resides to access it. All modern, interconnected devices speak HTTP, meaning clients can be entirely heterogenous.
+In terms of technology, this means a database hosted in the cloud sits behind a small bit of marshalling code that reads and writes JSON represented garden measurements based on standard HTTP requests it receives. For instance, if the API receives a POST request a function is initiated that grabs the data in the body of the HTTP POST and writes that data to the database. If it receives a GET request a function queries the database records and responds with a textual representation of what it found.
 
-Furthermore, I want to be able to digest the data in a standardized way so that I can create applications down the line that manipulate it. Data is sent using JSON, so transfers are declarative and very efficient. Parsing though the raw data is not computationally expensive, so constructing data structures in any native language should be wonderfully simple.
+This service is incredibly valuable because it makes Victor much more robust, secure, and accessible. For instance, the data coming from my garden is valuable and should be made available to any number of clients to read. In the future I may want to create different an application that reads data from gardens that exist all over the country and compare their yield based on weather and other health indicators. It could also be the case that I want to create a native application that can send updates straight to my desktop. By creating an API using standard RESTful practices the clients that intend to read in my data don't need any previous knowledge aside from the URL of where it resides to access it. All modern, interconnected devices speak HTTP, meaning clients can be entirely heterogenous.
+
+Furthermore, I want it to simple to be able to digest the data in a standardized way so that future applications are able to easily manipulate it. Data is sent using JSON. The entire service is textual, so transmission is efficient and cheap. Parsing though the raw data is not computationally expensive, and because JSON is a standard form of representation, constructing data structures in any native language should be straight forward.
 
 #### Security Implications
 
@@ -114,7 +171,7 @@ Taken one step further, we can then decide that for any given commit that passes
 
 ## Docker
 
-Every sensor is controlled by a single script. Though most of the scripts share at least some code, I wrote a few utility methods for timing and reporting findings that are imported by nearly every sensor, they each have very separate dependencies. Some require specific hardware-level systems packages, whereas others might only need a tagged version of a Python library hosted on Github. It's expected that every component has a unique set of dependencies and it's assumed that many of these will conflict. Furthermore, the scripts are also separate in their access roles. A single process is expected to be able to communicate outside of my home network, and all of the sensor's programs are expected to be able to communicate amongst each other. Likewise, only a single process, the same program that is able to send messages outside of the home network, should be reachable via the internet. That same program should be able to send messages to the other sensor running scripts.
+Every sensor is controlled by a single, separate Python script. Most of the scripts share at least some code including a collection of utility methods for timing and reporting findings I wrote, however, they each have very separate dependencies. Some require specific hardware-level systems packages, whereas others might only need a tagged version of a Python library hosted on Github. It's expected that every component has a unique set of dependencies and it's assumed that many of these will conflict. Furthermore, the scripts are also separate in their access roles. A single process is expected to be able to communicate outside of my home network, and all of the sensor's programs are expected to be able to communicate amongst each other. Likewise, only a single process, the same program that is able to send messages outside of the home network, should be reachable via the internet. That same program should be able to send messages to the other sensor running scripts.
 
 I chose Docker as the primary tool to handle sensor's code deployment, separation, and management. Docker is a technology and framework built around developing, building, and deploying applications inside of software containers. Containers are a virtualization technique in which and application and its dependencies are packaged in isolated processed. Like standard virtual machines, Docker containers ensure that I can customize and specify all of the dependencies at the user level. This solves the dependency collision issues because each container has its own unique and unshared user space. Containers are initialized and provisioned via a scripted Dockerfile, which means that environments are consistent and shareable. Similarly, Docker containers, like the code that they host, work well with version control.
 
