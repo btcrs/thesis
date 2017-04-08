@@ -9,12 +9,12 @@ For the sake of building a comprehensive model of Victor's priorities, strengths
 As I've mentioned previously the data gathered from any and all gardens should be fully available. Localized data is important to the maintainers, but open data provides a sample size large enough for deriving correlations, which may facilitate increased yields and help build stronger configurations.
 
 For this reason, though data's access has no reason to be protected, its integrity and availability, however, are absolute necessary.
-
+[Good distinction between confidentiality vs integrity and availability. May be worth a brief definition of the terms. I.e. "If the sensor was knocked offline, this would constitute a loss of availability" etc. Advisors aren't likely to be versed in this, and while they will almost certainly get the gist, you can make it more concrete]
 ### Trust
 
 The three services that Victor is comprised of are made up of very different technologies, as noted in the previous two chapters, and the have similarly different boundaries of trust.
 
-The garden's computers live in a self-contained subnet. A firewall sits at the entry point of the network and allows only properly formed messages through. For this reason there's an expectation of trust between garden devices. Messages sent among internal entities have an assumed integrity, but the construction and format of the messages are still standardized. Messages to the gardener container are trusted if they are signed by the API.
+The garden's computers live in a self-contained subnet. A firewall sits at the entry point of the network and allows only properly formed messages through [Does this represent an IP blacklist or are there just certain parameters that need to be included for the message to go through? Maybe a brief definition of properly formed. I haven't read, but maybe there's a chapter that refers to what these messages look like and you can reference it.]. For this reason there's an expectation of trust between garden devices. Messages sent among internal entities have an assumed integrity, but the construction and format of the messages are still standardized. Messages to the gardener container are trusted if they are signed by the API.
 
 The API trusts messages sent by both the gardener container and authenticated users. Messages sent from the gardener are standardized and must be of the expected format. A request from the garden must also contain a secret API key that matches the one defined for the respective API's endpoint. Messages from the front end are trusted if the can pass the OAuth authentication check. After a user goes through authenticating through either Facebook or Google, they're give an access key which be passed with every request. Changes to the API are pushed only by a authenticated user with the proper role-based access.
 
@@ -24,11 +24,13 @@ The front-end puts it's trust in the API to pass properly formed and fully vette
 
 The gardener container hosted on one of the garden machines sends newly gathered measurements and receives commands from the API. No other data is expected to transfer during normal operation. However, in the case of management and deployment, the garden machines expect remote access by a credentialed admin user.
 
-The garden thus expects connections via port 80 and 443 for standard HTTP and SSL respectively as well as port 22 for remote deployment via docker-compose and management over SSH.
+The garden thus expects connections via port 80 and 443 for standard HTTP and SSL respectively as well as port 22 for remote deployment via docker-compose and management over SSH [Why keep 80? For debugging? My understanding of the network setup implies a sniffer wouldn't really have luck here anyway, and the data isn't supposed to be confidential. So it probably doesn't matter.].
 
 The API sends and receives requests to the garden. All data transferred is textual and represented through a standardized JSON-based format. Deployment of new developments and changes is handled via Serverless using the AWS CLI or through the Amazon Web Services management portal.
 
 The API expects requests over both port 80 and 443 for HTTP and SSL.
+
+[Same question about 'why 80' here.]
 
 The front-end sends requests and receives data from the API. Any message that the user wishes to be received by the garden needs to be accepted by the API and forwarded appropriately.
 
@@ -55,8 +57,11 @@ Considering the most blatant avenues of attack, the service has a few vulnerabil
 Authentication and proper session management is absolutely key. Gaining unauthorized access to any of the services, but especially the API, is highly damaging. It's absolutely critical that passwords are strong and two-factor authentication is used where possible. Sessions should require sane re-authentication and confirmation.
 
 Network security of the garden is a weakness of the service. No unnecessary services should be running on any of the garden's machines. Only the single machine hosting the gardener container should be network facing. The firewall should have stringent checks and fail closed. The goal should ultimately be to harden the machines to the greatest extent possible using all modern best practices.
+[One might define fail closed here.]
 
 Data received by the API and sent and received within the network should be checked and sanitized. If somehow a message was able to bypass the step of authentication, the API and garden machines should sanitize it in hopes of limiting its potential damage.
+
+[Maybe give an example of a bad input and how one would sanitize it. What might the check look like? Just make things more concrete for the reader. Your advisor has been wading through security verbage for a couple minutes now and a code snippet or something similar might put them back in familiar territory.]
 
 Likewise, the front-end controls should be checked and sanitized to prevent any unnecessary web vulnerabilities, like cross-site scripting or request forgery, to eliminate the tools an attacker has to elevate privileges.
 
@@ -74,13 +79,15 @@ An enclosure is a necessary component of the build because the garden is outside
 
 With the device in hand, an attackers first step would be attempting to gain local access over USB or ethernet. Though, we may require these ports for wireless adapters, not all of the ports are likely to be in use. Unused ports can easily be desoldered and removed. Used ports can be coated in epoxy making their connections semi-permanent and interfacing using these vectors **much** more annoying for an attacker. Lastly, the SD card contains all of the data necessary to send messages to the proper API endpoint, so some means of obfuscation and protection was necessary. Encryption of the entire filesystem is the most secure way of solving this issue, but it can be problematic in the case of power failure because an authorized user may not be around to enter the decryption key for every device on reboot. Not to mention the fact that in a large-deployment this could be a huge waste of time. For Victor's purposes the creation of data is not a large enough concern to risk the increase in device management, so we can handle the SD card much like actively in use port. Coating the SD card reader in epoxy is enough to create a semi-permanent connection which likely offers enough of a discouragement to possible attacker. There's always the chance of desoldering the entire reader and physically connecting it to another device, but this is a risk I was willing to take.
 
+[Might wanna replace 'I was willing to take' with something a little more formal about the balance between usability and security.]
+
 ### Network
 
 The garden was in close proximity to my home wifi network, so I connected a small portable router to use as a separate access point. All garden devices connected to this router allowing me to create and manage a protected subnet. Only one device was allowed access in and out of the network. This machine hosted the gardener container used to send and receive messages to the API. Though the gardener machine has some additional measures, each Raspberry Pi was hardened by the following actions.
 
 -Every machine's username and password were changed from their defaults.
 
-Though this step seems trivial, the number of microcomputers with unchanged credentials that are accessible over the internet it unnerving.
+Though this step seems trivial, the number of microcomputers with unchanged credentials that are accessible over the internet is unnerving. [Might mention a statistic here or some information off of Shodan]
 
 -All unused services were shut off
 
@@ -89,6 +96,8 @@ Raspberry Pi's OS comes default with a handful of unnecessary running services. 
 -Machines are kept regularly updated.
 
 One of the easiest ways to keep the OS and necessary services secure is by updating them regularly. To cut down on maintenance requirements this is handled with `cron-apt` a tool used to automatically update packages at regular time intervals.
+
+[Pretty cool. I didn't even know that existed.] 
 
 The main gardener machine also included the following two measures because of its increased responsibilities.
 
@@ -100,11 +109,13 @@ The gardener machine has the largest SD card at a whopping 64 Gigabytes, so it h
 
 Iptables is is a standard firewall included in most Linux distributions that allows for user-defined configuration of the tables provided by the Linux kernel firewall. The configuration I've used is pretty simple, but it allows me to define the ports and networks from which I allow communication. A huge benefit of the firewall is that it allows me to drop any packet that's not sent to the expected ports -- 80, 443, and 22\. Furthermore, a third party tool Fail2ban runs on the Raspberry Pi and monitors the logs and autonomously modifies the iptables rules to ban any IPs that appear malicious. Too many password failures or inappropriate snooping are circumstances that can be configured as a means for ban.
 
+[Also nice.]
+
 ### API
 
 One of the benefits of using a serverless architecture hosted with cloud services is that, I'm not responsible for hardening any of the servers that my API will ultimately run on. I do, however, need to properly manage authentication to the endpoints I want protected. The two mechanisms that I used to protect the endpoints were Amazon authorizers and API keys.
 
-API keys aren't inherently a great form of security because they relies on a single secret shared between the main garden device in the API, but because the garden's network and devices are secured well they provide a cost effective and simple means of decent protection. The key is created and stored within the Amazon Management Portal and set as an environmental variable on the main garden machine. Every request sent to the API from the garden contains the key in it's headers. Though I'm confident about the API key's role in this particular build, future applications may wish to utilize IOT frameworks, like AWS Greengrass or AT&T's M2X, for management, deployment and security.
+API keys aren't inherently a great form of security because they relies on a single secret shared between the main garden device in the API, but because the garden's network and devices are secured well they provide a cost effective and simple means of decent protection. The key is created and stored within the Amazon Management Portal and set as an environmental variable on the main garden machine. Every request sent to the API from the garden contains the key in it's headers. Though I'm confident about the API key's role in this particular build, future applications may wish to utilize IOT frameworks, like AWS Greengrass or AT&T's M2X, for management, deployment and security [what benefit do these technologies offer?].
 
 When a request is sent to an Amazon API Gateway it first checks to determine whether or not any custom authorizers are associated with the lambda function it's trying to access. If one exists the gateway grabs the authorizer token in the request and forwards it to the authorizer. The API implements a OAuth authentication via Lambda so functions protected via the authorizer are perfectly secure assuming a valid OAuth configuration and barring any breach of Google or Facebook.
 
