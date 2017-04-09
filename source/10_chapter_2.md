@@ -26,12 +26,6 @@ Container-Gardening is the name I've given to the repository for all of the reso
 
 In the case of my specific test build I've chosen to use three separate boards, each of which are produced and sold by RaspberryPi. The three microcomputers are the RaspberryPi 3, RaspberryPi Zero, and RaspberryPi 2 rev b.
 
-![Model B \label{model_b}](source/figures/modelb.jpg)
-
-![Zero \label{zero}](source/figures/zero.jpg)
-
-![3 \label{3}](source/figures/pi3.jpg)
-
 Each board has drastically different cost, IO limitations, and power requirements. For instance, the RaspberryPi Zero, a $5 microcomputer, has a power rating of 160ma and a 1 Ghz single core processor, whereas the RaspberryPi model 3 costs $37.95 for a 1.2 Ghz quad-core processor and an 800ma power rating.
 
 Though the total power usage of the build and the computational power required to host the required sensors will ultimately impact the choice in platform -- there are a small set of requirements. First the garden's computer needs to run some variant of linux in order to leverage the Docker ecosystem. I've chosen Ubuntu ARM, but any modern Linux OS would reliably and comfortably facilitate using Docker. The chosen board also needs a GPIO interface. A strong majority of sensors sold today interface over GPIO. I2C and SPI communication protocols are relatively efficient, so the total number of external components per board can be much greater than alternatives using input like USB. Lastly, the board needs some means of networking. At least one board needs access to the internet, but all need some way to communicate whether over the wire, HTTP, or some other short range mesh networking.
@@ -335,3 +329,9 @@ Though collecting and sorting all of the data adds some complexity to the client
 For credentialed users a small icon button is added to the parameters with configuration or manual controls. Clicking the button opens a window with the appropriate inputs and a form mapped to the API endpoint. Submitting the form sends a simple HTTP request in the same exact format as submitting or manipulating data. User's controls are never multi-step, so submission fully hands off responsibility to the API. Furthermore, any command that invalidates the controller's current data initializes a subsequent request for a data update. Neither call requires the page to reload, but because of Angular's two way data-binding any change in data is immediately reflected in the view resulting in a near real-time display. If no change occurs on the page, the data is refreshed based on the time since the last API call.
 
 As previously mentioned, this service is very simple, which is largely due to the architecture of the other components. I chose to develop a web application for the widest availability, but there's very little preventing the front end being replaced or duplicated. The data is fully abstracted from the application, so a mobile application, native client, or something more novel like a skill for Amazon's Alexa.
+
+![Model B \label{model_b}](source/figures/modelb.jpg)
+
+![Zero \label{zero}](source/figures/zero.jpg)
+
+![3 \label{3}](source/figures/pi3.jpg)

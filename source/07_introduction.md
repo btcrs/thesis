@@ -1,7 +1,5 @@
 # Introduction {.unnumbered}
 
-# Context {.unnumbered}
-
 The global population is projected to see an increase of 2.3 billion people by 2050\. If current trends hold, a majority of the 9 million will live in cities and only around 3 percent will have any direct role in the production of their food. [^fn1]
 
 Most land suitable for farming is already being used, so 90 percent of the necessary increase is expected to come from increased yield; however, annual yield increases have stagnated to only half of the historical average. Agricultural scientists are facing new and unique problems stemming from the techniques and practices that have helped feed and sustain the twentieth century's population boom.[^fn8]
