@@ -2,48 +2,75 @@
 
 ## Introduction
 
-Victor's primary valuable resource is the data read from each of the garden's sensors. Without maintaining the integrity of the data, the framework provides very little benefit to any of its users. If, for instance, readings of reservoir depth were modified or falsely constructed to show a full reservoir when in fact it was dangerously low, which would constitute a breach of integrity, Victor would both not be serving its intended purpose and be explicitly misleading its users.
+The most important part of Victor is its data. Victor makes it easy to collect more data and new types of data. It also lets users view data as the composite of a few pretty graphs rather than a wall of text. Getting an overview of the garden's health is quick even with a huge amount of data. Yet none of this functionality is important without the data.
 
-For the sake of building a comprehensive model of Victor's priorities, strengths, and weaknesses I assume there exists some malevolent attacker with the sole intent of causing as much harm to the system as possible with all of the resources necessary to do so.
+For this reason, it is very important to me that the data is accurate and current. When I open Victor's web application I expect to see graphs that represent the state of the garden. Wrong data or a lack of data means Victor is not providing value and could be causing harm.
 
-As I've mentioned previously, the data gathered from any and all gardens should be fully available. Localized data is important to the maintainers, but open collective data provides a sample size large enough for deriving correlations, which may facilitate increased yields and help build stronger garden configurations.
+For instance, what if the water depth graph shows that the reservoir is close to full while it is empty or emptying? In this case Victor is not providing any value, and is very explicitly causing harm by misleading me. Opening the app to see no data at all is still bad, but less dangerous. A lack of data could arise from a simpler hardware failure or software bug, but it could also point to some attacker gaining access to the database service or blocking the web application and the database's communication. In any case, this lack of data availability is much quicker to spot and diagnose.
 
-For this reason, though data's access has no reason to be protected, its integrity and availability are absolutely necessary.
+ When I see a healthy reservoir depth I expect to be reading accurate measurements from a sensor that is still online. This expectation is important to keep the framework useful and accountable. Though, I do not believe it is something that I can take for granted.
 
-In this scenario the destruction of the garden's data or preventing access to that data would constitute the loss of availability.
+There are two things that could keep Victor's data from being available and accurate. Either the system could fail or someone, or something, could attack it. There is always some risk of the system failing. Hardware is bound to fail because electronics do not fend well outdoors, and software always needs to maintenance. I built the framework to be resilient, which I detailed in the previous chapter. One of the ways I accomplished this, however, was by making routine maintenance easier. These sorts of failures are both unpreventable and pretty detectable. Hardware failure, for instance, is much more likely to report unrealistic or no data than it is to show believable, fake data. The latter issue is a bit more unnerving, but should be largely preventable. In this chapter, I'll discuss the ways an attacker could abuse Victor's services and use the system to compromise the data's accuracy and availability. I'll then outline how I weighed the difficulty and potential damage of these attacks while deciding where to focus the frameworks defense and the mechanisms currently put in place to protect the system.
+
+### Who is the Attacker
+
+The simplest definition of "the attacker" is anyone who attempts to use Victor in an unintended, malicous way. Though short and simple, this definition implies a great deal of difficulty in identifying any single attacker. First, this concept of  "the attacker" emphasizes intentionality over concrete actions. A wide variety of things, notably fame, boredom, and financial gain, can motivate cyber attacks. Determining possible outcomes of an attack can help identify likely motivations. Second, there are many more unintended, malicious actions than intended ones.  Since I developed the framework I am immediately disadvantaged. I have a very clear, but limited, of Victor's services and how they communicate. An attacker's view is much more fluid. They should not have a very clear understanding of the framework, but they are only limited by their imaginations.
+
+Thinking about who are we protecting the system against is always valuable. It helps identify what exactly we are protecting and what is necessary to protect it. Finding a good answer is difficult because there is almost never one attacker. Victor is likely to illicit some interest from a small subsection of all possible attackers. Though I cannot identify a single attacker, I can try to predict the most likely types of attackers. By doing so I can also start to determine the most common ways attackers will try to abuse Victor's services.
+
+In most cases categories of attackers can be defined using two variables, motivation and resources. Motivation in this context defines the amount of effort an attacker would commit to my garden's network specifically. Resources includes the tooling, experience, personnel, and time available to that attacker.
+
+ The most dangerous, and difficult to protect against, are the attackers that are highly motivated with a large pool of resources. This group includes nation states and organized, professional rings of hackers. Any garden network, including mine, would be invisible to these sorts of attackers unless it feeds a huge number of people or is integral to generating large amounts of money.
+
+Attackers with little or no motivation and only moderate resources are more plentiful. Novice hackers find or write scripts to find possible targets. These programs wander the open internet looking for machines exposing services, like a Raspberry Pi running SSH. Then they spend a small amount of time trying to execute a novel attack or guess the password before moving on to the next target. Their motivation is low, but their resources are more plentiful than you would expect. Tools to automate mindless attacks like these are widely available and free. Many automated bots scan the internet in the same way novice hackers do. They look for vulnerable devices that they are confident that they can compromise.  These vulnerable devices help grow a network of infected machines used to serve ads or perform DDoS attacks. Their motivation is even lower than novice hackers because they are looking for a very specific signature. However, they have the benefit of running perpetually and autonomously. I expect that a very strong majority of attackers interested in Victor would be in this group of attackers. Because of this most of my defensive measures are to protect against simplistic, automated attacks.
+
+The rest are in place to guard against the smaller group of possible attackers that have slightly greater motivation. By committing more time and effort to learning about Victor itself these attackers could conceivably construct a more elaborate attack using the framework's data flow and the communication between services. These scenarios are the most likely to compromise the data accuracy.
+
+I expect the types of attackers, their motivations, and the tools they have available to differ. As I work through the possible attacks and how I worked to prevent them throughout the rest of this chapter I will include a quick synopsis of expected attacker type at the beginning of each section.
 
 ### Trust
 
-The three services that Victor is comprised of are each built with very different technologies, as noted in the previous two chapters. Likewise, they have very different boundaries of trust.
+The three services that comprise Victor are all very different. They each use very different technologies to provide separate, complementary functionality. In order for the services to work together transparently they need to be able to communicate.
 
-The garden's computers live in a self-contained subnet. A firewall sits at the entry point of the network and allows only properly formed messages through
+Transferring data in Victor requires HTTP communication between each component. Luckily, the messages, senders, and recievers are all very predictable. For instance, the web application is never supposed send messages directly to the garden network. We can expect any message received be the garden and sent from the web application is malicious.  
 
-A valid request from outside of the network only ever comes from the API, however, because the API is built on a serverless architecture requests will likely never come from the same IP address. Amazon Lambda does not have a set list of addresses that it uses. Amazon, as a organization, owns a publishes a list of their IP addresses, but this list is liable to change at any point in time. For these reasons there is not a reliable way to implement a white list protection, where messages would immediately be denied if they were not included in the list.
+Using the expected flow of communication I have defined trust relationships between the services. These relationships define what messages the framework expects, trusts, and needs to function. Using that list I am able to deny any messages that do not fit the expected characteristics.
 
-Instead, all incoming requests are expected to be signed by the API Gateway that sits at the front of the API service.
-To sign a request, the Gateway first forms the request. Then it generates a string, the concatenation of the name of the hash algorithm, the request date, a credential scope string, and the request in question, to use as input for a cryptographic hash function. The credential scope string itself is a concatenation of date, region, and service information. The signature is the created using this string and a secret derived key created using a series of hash-based message authentication codes.
+The garden's computers live in a self-contained subnetwork of my home network. A firewall sits at the entry point of the garden network as a first line of defense. The rules in this firewall deny internet connections to the Raspberry Pis that are not running the Gardener container.
 
-This signature is then verified on the Garden's end. Regardless of a valid signature, the request is still treated as potentially dangerous.
+Communication to and from the Gardener is only expected to be with the database API service. The database service is built on a serverless architecture, so it is not expected to use the same IP address more than once. Amazon Lambda, the serverless hosting service, does not have a set list of addresses that it uses. Amazon owns and publishes a list of their IP addresses, but this list is liable to change at any point.
 
-For this reason there is an expectation of trust between garden devices. Messages sent among internal entities have an assumed integrity, but the construction and format of the messages are still standardized. Messages to the gardener container are trusted if they are signed by the API.
+These reasons make implementing a IP address whitelist error prone. A whitelist would deny any messages sent by an IP address that is not on the list. This would cut down a lot of malicious automated traffic, but in this case it introduces maintenance complexity.
 
-The API trusts messages sent by both the gardener container and authenticated users. Messages sent from the gardener are standardized and must be of the expected format. A request from the garden must also contain a secret API key that matches the one defined for the respective API's endpoint. Messages from the front end are trusted if the can pass the OAuth authentication check. After a user goes through authenticating through either Facebook or Google, they're give an access key which be passed with every request. Changes to the API are pushed only by a authenticated user with the proper role-based access.
+Instead, to be trusted, messages from Amazon need to be signed by the Amazon API Gateway that manages database service's requests. To sign a request, the Gateway first forms the request. Then it generates a string to use as input for a cryptographic hash function.  The signature is the created using this string and a secret derived key created using a series of hash-based message authentication codes.
 
-The front-end puts it's trust in the API to pass properly formed and fully vetted data. Changes to the front-end are propagated through Github.
+This signature is then verified on the Garden's end. Messages that contain a valid signature are trusted, but the contents are treated as being potentially dangerous.
 
-### Data Flows and Entry Points
+The Gardener container first reads the message to make sure its safe and then forwards it. Messages sent within the garden network are all expected to be trustworthy because the Gardener container is  looking out for the rest of the machines and containers in garden. The construction and format of the messages are still standardized so spotting issues in the logs is straightforward.
 
-The Gardener container hosted on one of the garden machines sends newly gathered measurements and receives commands from the API. No other data is expected to transfer during normal operation. However, in the case of management and deployment, the garden machines expect remote access by a credentialed admin user.
+The database service trusts messages sent by both the gardener container and web application's authenticated users. Messages sent from the gardener are standardized and must be in an expected format. A request from the garden must also contain a secret API key that matches the one defined by the API's endpoint. Messages from the web application are trusted if the can pass the OAuth authentication check. After a user goes through the process of authenticating with either Facebook or Google, they are given an access key to include in every request.
 
-The garden thus expects connections via port 80 and port 443 for outgoing HTTP and incoming HTTPS requests respectively as well as port 22 for remote deployment via docker-compose and management over SSH. These only constitute the ports open to receive messages externally. Internally containers communicate over port 8000.
+The web application's expectation are the simplest. It asks for data from the database service, so it trusts that the data that it receives is in the right format and vetted data. The database service is not expected to do a lot of data processing, so the web application is expected to check it over quickly before reflecting it directly to the web page.
 
-The API sends and receives requests to the garden. All data transferred is textual and represented through a standardized JSON-based format. Deployment of new developments and changes is handled via Serverless using the AWS CLI or through the Amazon Web Services management portal.
+### How Is The Data Sent
 
-The API expects requests over both port 80 and 443 for HTTP and SSL. Standard HTTP is used for most requests to the Amazon API gateway. Creation and consumption of data is both non-confidential and not especially vulnerable to any sort of sniffing. The use of HTTPS when authenticating and performing authenticated requests, like deletion or configuration, is crucial. In this case the use of HTTPS prevents and attacker from gaining unauthorized access to credentialed actions by protecting OAuth tokens used to authorize such actions.
+In the previous section I defined which services are expected communicate. I defined some high-level ways to confirm the sender of the message and when the contents of message should be treated cautiously.
 
-The front-end sends requests and receives data from the API. Any message that the user wishes to be received by the garden needs to be accepted by the API and forwarded appropriately.
+Now I will detail exactly why and how the messages are sent from and received by the services.
 
-The front-end expects requests over both port 80 and 443 for HTTP and SSL strictly because that is what is made available by GitHub Pages. Ideally, the service would default to HTTPS, but GitHub Pages is free, and messages can still be sent and received in a protected way.
+The Gardener container sends measurements and receives commands from the API. Victor uses HTTP as a standard protocol for communication. The garden allows connections over port 80 and port 443 for outgoing HTTP and incoming HTTPS, a secure version of HTTP, requests.
+
+Each Raspberry Pi, including the one hosting the Gardener, also expects communication over port 22. The Pis use port 22 for SSH which is used for both remote deployment via docker-compose and standard management over SSH. Port 22, 80, and 443 are the only externally facing allowed ports. Internally, machines send HTTP messages between each other containing new measurements and commands on port 8000.
+
+The database service sends commands to and receives data from the garden. It also recieves requests for data from the web application service. All data transferred is textual and represented through a standardized JSON-based format.
+
+The API expects requests over both port 80 and 443 for HTTP and HTTPS. Standard HTTP is used for most requests to the Amazon API gateway that are asking for data. Consumption of data is both non-confidential and is meant to be available to any user. HTTP in this case is allowed so that the data is available to as many users as possible.
+
+HTTPS is used for any request that will create, delete, or manipulate data on the database service. The use of HTTPS when authenticating and performing authenticated requests, like deletion or configuration, is crucial. In this case, using encrypted messages prevents an attacker from gaining unauthorized access to credentialed actions because it protects the tokens that authorize these actions.
+
+The front-end sends commands to and receives data from the database service. Any message that the user wants to send to the garden is mediated by the database service. I limit the number of possible senders to simplify the process of defending the communication.
+
+The front-end expects requests over both port 80 and 443 for HTTP and HTTPS. For this build I chose to use GitHub Pages, GitHub's free hosting service, because it is free and very easy to manage. Ideally, the service would default to HTTPS, but GitHub Pages does not allow this configuration. Instead messages and commands are sent in a protected way programmatically.
 
 ### Threats
 
