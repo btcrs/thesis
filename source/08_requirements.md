@@ -8,7 +8,7 @@ Second, the connected gardens should, in real time, update the user on the statu
 
 Last and most important, the product should exist as a fully extensible framework. Though I am designing the project with a finite set of sensors and parameters in mind, adding another sensor, choosing to use a different number of components, and monitoring a greater number of gardens should be expected and accounted for. The system for modification should be simple and documented.
 
-These requirements ensured that I created a useful, secure product that was abstracted from the configuration of the gardens being monitored and the hardware configurations of each.
+These requirements ensured that I created a useful, secure product that was abstracted from the configuration of the gardens being monitored and the hardware configurations of each garden.
 
 ## Summary of Chapters {.unnumbered}
 

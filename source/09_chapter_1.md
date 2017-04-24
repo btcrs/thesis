@@ -12,7 +12,7 @@ The second garden was devised after a plumbing incident which stopped the flow o
 
 ![Second Garden\label{Garden}](source/figures/nftpvc.jpg)
 
-In both instances, on top of the reservoir sits a small water-tight enclosure that houses the electronics used to monitor the garden. The heart of the system is the Raspberry Pi -- a credit card sized microcomputer. My garden incorporates three separate networked Raspberry Pis. Though only one is truly necessary, I chose to use multiple in order to emulate a large scale garden consisting of many separate table -- each table would in this case have a separate Pi. These computers each control a handful of sensors constantly measuring health indicators, which they push to a cloud hosted database. The operator of the garden can manage each computer by accessing it directly or through a remote provisioning tool. To display the data collected by the garden's computer, or any collection of garden's computers, another cloud hosted site provides a dashboard with real time graphics and analytics that are generated from the most recent data stored in the database.
+In both instances, on top of the reservoir sits a small water-tight enclosure that houses the electronics used to monitor the garden. The heart of the system is the Raspberry Pi -- a credit card sized microcomputer. My garden incorporates three separate networked Raspberry Pis. Though only one is truly necessary, I chose to use multiple in order to emulate a large scale garden consisting of many separate tabletops -- each tabletop would in this case have a separate Pi. These computers each control a handful of sensors constantly measuring health indicators, which they push to a cloud hosted database. The operator of the garden can manage each computer by accessing it directly or through a remote provisioning tool. To display the data collected by the garden's computer, or any collection of garden's computers, another cloud hosted site provides a dashboard with real time graphics and analytics that are generated from the most recent data stored in the database.
 
 ![Inside\label{inside}](source/figures/inside.jpg)
 
@@ -26,7 +26,7 @@ After the initial setup, by accessing the dashboard site we can gather a quick a
 
 #### Temperature
 
-The build includes three separate sensors that gather measures of temperature -- a sensor each for ambient, reservoir, and channel temperature. The ambient and reservoir temperatures are measured via a waterproofed DS18B20 sensor. The DS18B0 is reasonably accurate and IO efficient.
+The build includes three separate sensors that gather measures of temperature -- a sensor each for ambient, reservoir, and channel temperature. The ambient and reservoir temperatures are measured via a waterproofed DS18B20 sensor. The DS18B0 is reasonably accurate and I/O efficient.
 
 Using the 1-Wire protocol it's possible to gather separate measurements from multiple, identifiable devices using only a single pin of input.
 
@@ -34,9 +34,10 @@ Using the 1-Wire protocol it's possible to gather separate measurements from mul
 
 This is incredibly beneficial because each of the garden computers can incorporate more devices without the need for a hardware extension that includes additional general-purpose input/output pins. Furthermore, each sensor can be identified programmatically, because each sensor has a unique serial number, which means that a single process can interface with all of the sensors.
 
-One additional sensor is used to measure the temperature inside one of the top-side growing channels. Instead of the DS18B20 the internal channel temperature is measured using an AM2315\. This sensor includes a waterproof housing that includes an identical DS18B20 temperature sensor, a capacitive humidity sensor, and a small microcontroller to provide a simple I2C communication interface. Though interfacing via I2C adds some complexity, having a measure of humidity inside the channels provides insight into the roots' growing conditions as well as propensity for harmful algae blooms.
+One additional sensor is used to measure the temperature inside one of the top-side growing channels. Instead of the DS18B20 the internal channel temperature is measured using an AM2315\. This sensor includes a waterproof housing that includes an identical DS18B20 temperature sensor, a capacitive humidity sensor, and a small microcontroller to provide a simple I2C communication interface. I2C, The Inter-integrated Circuit Protocol, is a low-level communication protocol that allows the "master" RaspberryPi to communicate with multiple "slave" sensors. The protocol uses 7-bit addressing, so it can interface with over 100 devices using the same four wires. Though interfacing via I2C adds some complexity, having a measure of humidity inside the channels provides insight into the roots' growing conditions as well as propensity for harmful algae blooms.
 
-It is assumed that monitoring of a single channel is sufficient because the channels exist in close proximity; however, barring monetary constraints additional sensors could be added very easily. Adding additional DS18B20's to each of the remaining channels for instance would only require mapping each of their serial ids to their respective locations.
+I assumed it is sufficient to monitor only one of the four water channels because they are close to one another.
+However, barring monetary constraints additional sensors could be added very easily. Adding additional DS18B20 sensors to each of the remaining channels for instance would only require mapping each of their serial ids to their channels.
 
 #### Ph
 
@@ -46,11 +47,11 @@ Coupled with temperature, pH is a very descriptive health indicator for a hydrop
 
 #### Flow
 
-A flow sensor is attached to the tubing that runs from the pond pump located inside the main reservoir to the entry point of each of the four channels. Although it's unlikely that each of the four entry tubes will be blocked at any given point, any blockage should impact the flow rate because of increased resistance. A sudden, or even gradual, decrease in flow should be a warning sign that urges garden maintainers to check for plumbing issues. The sensor includes a pinwheel with a magnet attached that turns as the water flows through it. A hall effect magnetic sensor on the other side of the plastic tube measures how many spins the pinwheel has made over a certain amount of time. This particular sensor requires only a single pin of digital input to read the pulse output.
+A flow sensor is attached to the tubing that runs from the pond pump located inside the main reservoir to the entry point of each of the four channels. Although it is unlikely that all four entry tubes will be completely blocked at the same time, a partial blockage or increase in resistance could affect the rate of flow. A sudden, or even gradual, decrease in flow should be a warning sign that urges garden maintainers to check for plumbing issues. The sensor includes a pinwheel with a magnet attached that turns as the water flows through it. A hall effect magnetic sensor on the other side of the plastic tube measures how many spins the pinwheel has made over a certain amount of time. This particular sensor requires only a single pin of digital input to read the pulse output.
 
 #### Wind
 
-An anemometer is included on the table top to gather the wind speed. This measurement is ancillary, but because NFT is a medium-less method of growing plants, windspeed can affect structural health. High wind speed may provide early warning for hazardous conditions allowing the garden's maintainer to provide some sort of cover. The anemometer included in this build provides an analog voltage between 0.4 and 2.0 volts corresponding to a 0 and 32.4m/s wind speed respectively.
+An anemometer is included on the tabletop to gather the wind speed. This measurement is ancillary, but because NFT is a medium-less method of growing plants, windspeed can affect structural health. High wind speed may provide early warning for hazardous conditions allowing the garden's maintainer to provide some sort of cover. The anemometer included in this build provides an analog voltage between 0.4 and 2.0 volts corresponding to a 0 and 32.4m/s wind speed respectively.
 
 The component is designed to interface with microcontrollers primarily. The required voltage is much higher than that which can be comfortably provided by a Raspberry Pi, so an external power source is required. Furthermore, Raspberry Pi's have no onboard analog to digital converter, meaning an external chip had to be included in the circuit.
 
@@ -58,29 +59,59 @@ In this build I decided to use an MCP3008\. The Raspberry Pi, like most other mo
 
 #### Depth
 
-Routine maintenance of the reservoir is largely unavoidable. Monitoring pH and temperature helps mitigate harmful algae growth and promotes plant growth, but bimonthly water cycling is one of the most efficient ways to maintain a healthy garden. A depth sensor is included in nutrient reservoir to help plan appropriate cycles. The rates of absorption and evaporation can differ depending on the temperature, state of the plumbing, and health of the plants. Once a predetermined amount of water has been expended it's likely a reasonable time to cycle the water. This build uses an eTape liquid level sensor that uses a resistive output that varies depending on immersion to determine depth. The resistive output of the sensor is inversely proportional to the height of the liquid because as more tape is submerged the sensor's resistance decreases. This sensor is also analog, so much like the anemometer it requires a single channel of the external analog to digital converter.
+Routine maintenance of the reservoir is largely unavoidable. Monitoring pH and temperature helps mitigate harmful algae growth and promotes plant growth, but bimonthly water cycling is one of the most efficient ways to maintain a healthy garden. A depth sensor is included in nutrient reservoir to help plan appropriate cycles. The rates of absorption and evaporation can differ depending on the temperature, state of the plumbing, and health of the plants. Once a predetermined amount of water has been expended it's likely a reasonable time to cycle the water. This build uses an eTape liquid level sensor that uses a resistive output that varies depending on immersion to determine depth. The resistive output of the sensor is inversely proportional to the height of the liquid because as more tape is submerged the sensor's resistance decreases. This sensor is also analog, so it requires a single channel of the external analog to digital converter.
 
 #### Light
 
-A small, cheap visible light sensor was added to determine the amount light reaching the plants each day. Because the table is mobile, it's possible to determine the optimal position for the current crops by monitoring sun exposure. The SI1145 is a small breakout board that measures visible light and IR to approximate UV index. The sensor is digital and communicates via I2C.
+A small, cheap visible light sensor was added to determine the amount light reaching the plants each day. Because the tabletop is mobile, it's possible to determine the optimal position for the current crops by monitoring sun exposure. The SI1145 is a small breakout board that measures visible light and IR to approximate UV index. The sensor is digital and communicates via I2C.
 
 ## Software
 
 ### Angular
 
-Angular is a Javascript framework developed and maintained by Google that is built around the idea that by extending HTML, web application developers can construct modular, declarative components that fit together to build dynamic web pages. Database operations are largely abstracted and the results of any AJAX calls can be bound to, and thus automatically update, the previously constructed, reusable DOM elements. Angular adds the ability to extend HTML and create Directives, which are encapsulations of HTML and client-side Javascript that allow developers to create and reuse custom elements. This leads to declarative markup, and means that reading the HTML alone is usually enough to get a quick idea of an application's purpose. Furthermore, by defining options that can be passed into directives, it's possible to create multiple similar components without an egregious reuse of code.
+Angular is a Javascript framework developed and maintained by Google that is built around the idea that by extending HTML, web application developers can construct modular, declarative components that fit together to build dynamic web pages. Database operations are largely abstracted and the results of any AJAX calls can be bound to, and thus automatically update, the previously constructed, reusable DOM elements. Angular adds the ability to extend HTML and create Directives, which are encapsulations of HTML and client-side Javascript that allow developers to create and reuse custom elements. This leads to declarative markup, and means that reading the HTML alone is usually enough to get a quick idea of an application's purpose. Furthermore, by defining options that can be passed into directives, it is possible to create multiple similar components without an egregious reuse of code.
 
-The web application, aptly called Victor, has two primary functions -- gathering data and displaying data. All of the information is time series data, so displaying the garden's data via graphs is a very repeatable process. This is one way in which I leveraged Angular to create an extensible dashboard to consume garden data.
+The web application is the only service in the Victor framework intended to be viewed directly. The web application uses the other two services transparently to create a valuable user experience. The transparency of the multiple services means that to most users the web application `is` the whole service, so I call it `Victor`. Victor, the web application, has two primary functions -- gathering data and displaying data. All of the information is time series data, so displaying the garden's data via graphs is a very repeatable process. Angular includes a directive `ng-repeat`, which adds the ability to use looping logic in the HTML itself. Looping through the data means that the number of graphs created is dynamic and matches the number the parameters stored in the database service, which is one way I leveraged Angular to create an extensible dashboard to consume garden data.
 
-Loading the dashboard initiates a request to the API that grabs a list of the most recent database entries.
+The web framework space is heavily flooded and also incredibly opinionated. My main criteria were that I wanted a structure that was both pluggable and maintainable, meaning I wanted every file to encapsulate only one module of logic, I needed the act of updating previously stored data to be transparent and fast, and I wanted a framework that was well maintained.
+
+During my research I was confident that Angular would provide a stable base considering the fact that it is backed by Google and has over 50,000 stars on GitHub; however, Angular's directives and two-way data binding are what drove me to ultimately decide Angular would work well within the structure I had devised for Victor the framework.
+
+I found that Directives facilitate clean, well-architectured web applications because the functionality to respond to user's actions and manipulation is handled explicitly the HTML components and considered from the start rather than added after the fact. For instance, the functionality of a drop down menu in Angular can determined from the HTML element itself. If I had chosen to build the application without Angular I would have had to declare the menu and its drop down functionality separately.
+
+In Angular a drop down could be defined by the following snippet where `dropdown-menu` is a predefined directive that encapsulates all of the Javascript code necessary to open the menu and respond to a user's clicks.
 
 ```
-$http.get('https://aadrsu3hne.execute-api.us-east-1.amazonaws.com/dev/datum').then(function(data) {
+<ul class='dropdown' dropdown-menu></ul>
 ```
 
-This function retrieves an array of entries asynchronously, so the the following `.then()` calls a function to manipulate the data once it is received.
+Without Angular a function would be defined in the application's Javascript to perform the dropdown action in response to a listener event. The following function demonstrates how a developer may construct a dropdown menu using only the jQuery Javascript library. The primary difference is that with Angular the HTML declares its function whereas when handling the same functionality in only Javascript the function is defining its target element.
 
-The resulting array is a bag of unsorted measurements from each of the sensors, so I do a bit of manipulation before assigning it to a variable that is visible to the HTML Directives.
+```
+jQuery(document).ready(function (e) {
+    e(".dropdown-toggle").click(function () {
+    }
+  }
+```
+Separating markup and application logic is not inherently bad, but I found that coupling the two makes maintaining and extending the application much easier.
+
+Two-way data binding goes one step further and eliminates a lot of the manual DOM manipulation all together. Because Victor is a data-heavy project this is beneficial because when a web pages uses one of the variables defined in an Angular controller it will automatically update and reflect the new value if that variable changes. For instance, when the controller for the dashboard page requests the most recent data from the database service and updates its charts variable the new data will automatically be reflected on the webpage without manually reloading.
+
+Though this is a small example of the benefit provided by using Angular as the underlying structure of the application, it demonstrates the two key mechanisms that made Angular an appealing option.
+
+Loading the dashboard web page initiates a request to the API that grabs a list of the most recent database entries.
+This function, `$http.get('https://aadrsu3hne.execute-api.us-east-1.amazonaws.com/dev/datum')` retrieves an array of entries from the database asynchronously, and the following `.then()` calls a function to manipulate the data once it is received.
+
+```
+$http.get('https://aadrsu3hne.execute-api.us-east-1.amazonaws.com/dev/datum')
+.then(function(data) {
+  ...
+});
+```
+
+The resulting array is a bag of unsorted measurements from each of the sensors. The data is stored in a single collection so the database service will not need to be modified if another sensor is added or a parameter's name changes. This makes extending and modifying the system easier, but adds some complexity to displaying the data on the web application. Each chart object displayed on the Victor web application requires its own data array, so I do a bit of manipulation to the unsorted bag of data before assigning it to a variable that is visible to the HTML Directives.
+
+When it is first received from the database service it looks like this.
 
 ```
 [{"parameter":"light","createdAt":1491252532082,"value":"352.000",
@@ -103,7 +134,32 @@ The resulting array is a bag of unsorted measurements from each of the sensors, 
 "id":"aa6ad140-18af-11e7-b313-5d5b225fc2b6","updatedAt":1491252841556},
 ```
 
-Each of these entries is transformed into key value pairs of the form `{"value": XXX, "date": XXX}` and collected into separate arrays for each measurement. Now this collection of parameters and their massaged values are assigned to a $Scope variable, another Angular construct that makes the data visible and modifiable via the HTML, so that I'm able to cycle through and create a data dashboard programmatically.
+Each of these entries is transformed into key value pairs of the form `{"value": XXX, "date": XXX}` and collected into separate arrays for each measurement. Now this collection of parameters and their massaged values are assigned to a $scope variable, another Angular construct that makes the data visible and modifiable via the HTML, so that I'm able to cycle through and create a data dashboard programmatically.
+
+In the following snippet I have already separated the bag into a collection of arrays called `measurements`. For every array in the collection, `angular.forEach(measurements,`, I add an object to the `vm.charts` variable. vm.charts is a $scope variable, so the HTML is able to use and modify it. Each object I am adding to the array is a collection of chart metadata and a measurement data array. The key of this object is the parameter name, which I use to title the chart.
+
+```
+{
+  vm.charts = {}
+  angular.forEach(measurements, function(item, key) {
+    vm.charts[key] = ({
+      data: item,
+      title: key,
+      interpolate: d3.curveMonotoneX,
+      color: '#f1367e',
+      width: 650,
+      height: 200,
+      right: 40,
+      x_accessor: 'date',
+      y_accessor: 'value'
+    })
+  })
+}
+```
+
+The result is a dynamically sized collection of chart objects. Each of these objects includes everything necessary to render a time series chart. The following snippet of code is able to create a full dashboard of approximately eight, the current number of measured parameters, time series graphs featuring real-time, updatable data.
+
+`ng-repeat='row in ctrl.charts | groupBy:2` groups the collection of measurement arrays into groups of two. Groups are made by choosing two adjacent arrays. After grouping, the code cycles through every grouped array and creates an HTML row. Then, with `ng-repeat="item in row"`, I'm able to create a chart to represent each of the measurement arrays by using the `<chart>` directive to render `metrics-graphics` time series charts. Theses charts are added to the row. Under the hood, the `<chart>` directive is constructing an object consisting of the necessary Javascript and HTML to create and render a chart with the given parameters, but this is abstracted to make the HTML page's components encapsulated and expressive. Modification of the data exposed by `item.data` through the web page is reflected in the Javascript and updates to the data in the Javascript are made visible immediately by the HTML, which is called two-way data binding.
 
 ```
 <div class="dash-page">
@@ -121,17 +177,8 @@ Each of these entries is transformed into key value pairs of the form `{"value":
 </div>
 ```
 
-This small snippet of code is able to create a full dashboard of approximately eight time series graphs featuring real-time, updatable data.
-
-`ng-repeat='row in ctrl.charts | groupBy:2` cycles through every element in the previously created object of measurement arrays by groups of two. Then, while looping through each group of two, I'm able to create a row of two charts by using the `<chart>` directive to render `metrics-graphics` time series charts. Under the hood, the `<chart>` directive is constructing an object consisting of the necessary Javascript and HTML to create and render a chart with the given parameters, but this is abstracted to make the HTML page's components encapsulated and expressive. Modification of the data exposed by `item.data` through the web page is reflected in the Javascript and updates to the data in the Javascript are made visible immediately by the HTML, which is called two-way data binding.
-
 ![\label{Victor}](source/figures/victorweb.png)
 
-Though this is a small example of the benefit provided by using Angular as the underlying structure of the application, it demonstrates two of the key mechanisms that made Angular an appealing option.
-
-The web framework space is heavily flooded and also incredibly opinionated. My main criteria were that I wanted a structure that was both pluggable and maintainable, meaning I wanted every file to encapsulate only one module of logic, I needed the act of updating previously stored data to be transparent and fast, and I wanted a framework that was well maintained.
-
-During my research I was immediately confident that Angular would provide a stable base considering the fact that it's backed by Google and has over 50,000 stars on GitHub; however, Angular's directives and two-way data binding are what drove me to ultimately believe Angular would work well within the structure I had devised for Victor.
 
 ### REST
 
