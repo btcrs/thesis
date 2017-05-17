@@ -22,4 +22,5 @@ pdf:
 	-V papersize=letter \
 	-V documentclass:report \
 	-N \
-	--latex-engine=xelatex
+	--latex-engine=xelatex \
+
