@@ -99,7 +99,7 @@ Two-way data binding goes one step further and eliminates a lot of the manual DO
 
 Though this is a small example of the benefit provided by using Angular as the underlying structure of the application, it demonstrates the two key mechanisms that made Angular an appealing option.
 
-Loading the dashboard web page initiates a request to the API that grabs a list of the most recent database entries.
+Loading the dashboard web page initiates a request to `Gardeners-log` that grabs a list of the most recent database entries.
 This function, `$http.get('https://aadrsu3hne.execute-api.us-east-1.amazonaws.com/dev/datum')` retrieves an array of entries from the database asynchronously, and the following `.then()` calls a function to manipulate the data once it is received.
 
 ```javascript
@@ -210,7 +210,7 @@ I also felt it was necessary that these two services should stand alone and act 
 
 ### Python
 
-Victor as a framework is meant to be explicitly language agnostic. Data is transferred using very standard RESTful web services meaning the lone requirement for a program to successfully submit data to the API is that it must be able to construct a valid HTTP request. Though this leaves a vast number of capable options I gravitated strongly toward Python for code that is directly interfacing with the sensors.
+Victor as a framework is meant to be explicitly language agnostic. Data is transferred using very standard RESTful web services meaning the lone requirement for a program to successfully submit data to the `Gardeners-log` is that it must be able to construct a valid HTTP request. Though this leaves a vast number of capable options I gravitated strongly toward Python for code that is directly interfacing with the sensors.
 
 Python facilitates really rapid development, many of the sensors in this build have far reaching community support and open-source libraries written in Python, and lastly RPi.GPIO is shipped with Raspian, the Raspberry Pi foundations Linux distribution. This module provides a direct interface to the boards General Purpose Input/Output pins. Each and every external component interfaces through these pins, so opting to use Python almost exclusively helped keep provisioning and deployment as simple as possible.
 

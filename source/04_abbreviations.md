@@ -11,6 +11,8 @@
 \textbf{UART} \> \textbf{U}niversal \textbf{A}synchronous \textbf{R}eceiver \textbf{T}ransmitter \\  
 \textbf{I2C} \> \textbf{I}nter \textbf{I}ntegrated \textbf{C}ircuit \\  
 \textbf{SOA} \> \textbf{S}ervice \textbf{O}riented \textbf{A}rchitecture \\  
+\textbf{OTP} \> \textbf{O}ne \textbf{T}ime \textbf{P}assword \\  
+\textbf{DNS} \> \textbf{D}omain \textbf{N}ame \textbf{S}ystem \\  
 \end{tabbing}
 
 \newpage

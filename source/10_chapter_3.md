@@ -80,13 +80,13 @@ There are two main ways an attacker could modify the data to make it inaccurate.
 
 First an attacker could pretend to be part of the garden network and send fake measurements to Gardeners-log.
 
-To send messages to the API the attacker would either need to steal the API key used to validate the Gardener container's messages and then send fake updates to the database, or they would need to gain access to the garden's network and send messages to the Gardener container, which would be forwarded and trusted by Gardeners-log.
+To send messages to `Gardeners-log` the attacker would either need to steal the API key used to validate the Gardener container's messages and then send fake updates to the database, or they would need to gain access to the garden's network and send messages to the Gardener container, which would be forwarded and trusted by Gardeners-log.
 
 Getting into the garden's network could include either physically accessing one of the Raspberry Pis and modifying the code or trying to access the garden's subnetwork with their own device and pretending to be a new garden machine.
 
 Alternatively, an attacker could try to send messages from the web application to modify or delete the data already stored in the Gardeners-log. If the attacker were able to make authenticated requests they could also send dangerous commands to the garden.
 
-If they were unable to authenticate through the web application, they could also try to send requests directly to the API and hope that their credentials were not checked there.
+If they were unable to authenticate through the web application, they could also try to send requests directly to the `Gardeners-log` and hope that their credentials were not checked there.
 
 There are also two places in Victor's data flow that an attacker could keep a user from being able to access the data. The attacker in these scenarios would be much less motivated. In fact, the garden would not even need to be the primary target. The attacker would most likely be a bot or a large network of bots called a botnet.
 
@@ -94,13 +94,13 @@ The two places where data could be prevented from making it to the user are betw
 
 Blocking communication between the Gardeners-log and the garden prevents a user from viewing data and issuing commands.
 
-If the Gardeners-log or garden network are overloaded with junk traffic, they will not be able to communicate. The user no longer has access to the most recent data because the garden cannot send messages to the API. The messages will be sent once the connection is resumed, but the latency can be an issue. Any configuration or control messages that need to be sent to the garden will not make it. Both of these issues can be severe in time-sensitive applications, like a rapidly dropping reservoir.
+If the Gardeners-log or garden network are overloaded with junk traffic, they will not be able to communicate. The user no longer has access to the most recent data because the garden cannot send messages to `Gardeners-log`. The messages will be sent once the connection is resumed, but the latency can be an issue. Any configuration or control messages that need to be sent to the garden will not make it. Both of these issues can be severe in time-sensitive applications, like a rapidly dropping reservoir.
 
 Blocking communication between the Gardeners-shed and web application causes slightly different issues. The user will not be able to view any data through the web application even though the data would likely be complete and recent. The user will also be unable to send messages to the garden. In a dire situation, the maintainer of the garden would have to access the Raspberry Pis directly over SSH.
 
 Lastly, each service includes some form of authentication, so they are all susceptible to a brute force attack. If any attacker found the credentials to one of the services they would be able to upload their own code, which could contain backdoors allowing them to perform any action they wanted, or invoke unauthorized actions.
 
-Discovering the credentials of the either of the Amazon AWS hosted service's administrator would allow the attacker to create their own API endpoints to perform any action. Bypassing a garden machine's SSH authentication would give the attacker direct access to the API key allowing them to create fake data. Circumventing OAuth authentication on the web application service would allow the attacker to modify and delete data and send commands through the API to the garden.
+Discovering the credentials of the either of the Amazon AWS hosted service's administrator would allow the attacker to create their own API endpoints to perform any action. Bypassing a garden machine's SSH authentication would give the attacker direct access to the API key allowing them to create fake data. Circumventing OAuth authentication on the web application service would allow the attacker to modify and delete data and send commands through `Gardeners-shed` to the garden.
 
 These three scenarios show that bypassing or breaking authentication on any of the services allows an attacker to easily manipulate the data, so protecting against these sorts of attacks is an important part of keeping the data accurate.
 
