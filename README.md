@@ -2,7 +2,7 @@
 
 > Victor: Creating a Monitored, Secured, and Self-Sustaining IOT Hydroponic Garden
 
-I developed Victor to help me grow vegetables by monitoring my garden. Victor is a framework composed of three separate services: `Container-gardening`, `Gardeners-log`, and `Victor`. Together these three elements gather measurements about garden's environment, store the data in a cloud hosted database, and display the measurements graphically on a web application.
+I developed Victor to help me grow vegetables by monitoring my garden. Victor is a framework composed of four separate services: `Container-gardening`, `Gardeners-log`, `Gardeners-shed`, and `Victor`. Together these elements gather measurements about garden's environment, store the data in a cloud hosted database, and display the measurements graphically on a web application.
 
 In this thesis I first detail the components, both hardware and software, used in my build and how they fit into the overall design and architecture of the framework. I then discuss how Victor could be abstracted from the use-case of hydroponic garden's entirely and used in a wide variety of distributed data acquisition applications.
 

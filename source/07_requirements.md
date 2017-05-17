@@ -16,6 +16,6 @@ In chapters 1 and 2 I will outline how I designed the application. In chapter 1,
 
 Chapter 2, **Implementation**, will then describe in detail how each item's functionality was built and show how they interact in order to display the role and extensibility of each.
 
-In Chapter 3, **Security**, I'll briefly outline the threat model I used while attempting to control the flow of data.
+In Chapter 3, **Security**, I will briefly outline the threat model I used while attempting to control the flow of data.
 
-Chapter 4, **Future Work**, I'll identify planned additions and how the extensibility of the framework would allow Victor to adapt to a wide variety of fields and applications.
+Chapter 4, **Future Work**, I will identify planned additions and how the extensibility of the framework would allow Victor to adapt to a wide variety of fields and applications.
